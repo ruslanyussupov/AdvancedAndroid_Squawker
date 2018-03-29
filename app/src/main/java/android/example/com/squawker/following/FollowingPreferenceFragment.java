@@ -15,16 +15,22 @@
 */
 package android.example.com.squawker.following;
 
+import android.content.SharedPreferences;
 import android.example.com.squawker.R;
 import android.os.Bundle;
+import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
+import android.support.v7.preference.SwitchPreferenceCompat;
+
+import com.google.firebase.messaging.FirebaseMessaging;
 
 
 /**
  * Shows the list of instructors you can follow
  */
-// TODO (1) Implement onSharedPreferenceChangeListener
-public class FollowingPreferenceFragment extends PreferenceFragmentCompat {
+// COMPLETED (1) Implement onSharedPreferenceChangeListener
+public class FollowingPreferenceFragment extends PreferenceFragmentCompat implements
+        SharedPreferences.OnSharedPreferenceChangeListener {
 
     private final static String LOG_TAG = FollowingPreferenceFragment.class.getSimpleName();
 
@@ -33,7 +39,27 @@ public class FollowingPreferenceFragment extends PreferenceFragmentCompat {
         // Add visualizer preferences, defined in the XML file in res->xml->preferences_squawker
         addPreferencesFromResource(R.xml.following_squawker);
     }
-    // TODO (2) When a SharedPreference changes, check which preference it is and subscribe or
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+
+                Preference preference = findPreference(key);
+                if (preference != null && preference instanceof SwitchPreferenceCompat) {
+
+                    if (sharedPreferences.getBoolean(key, false)) {
+
+                        FirebaseMessaging.getInstance().subscribeToTopic(key);
+
+                    } else {
+
+                        FirebaseMessaging.getInstance().unsubscribeFromTopic(key);
+
+                    }
+
+                }
+
+    }
+    // COMPLETED (2) When a SharedPreference changes, check which preference it is and subscribe or
     // un-subscribe to the correct topics.
 
     // Ex. FirebaseMessaging.getInstance().subscribeToTopic("key_lyla");
@@ -42,7 +68,20 @@ public class FollowingPreferenceFragment extends PreferenceFragmentCompat {
     // HINT: Checkout res->xml->following_squawker.xml. Note how the keys for each of the
     // preferences matches the topic to subscribe to for each instructor.
 
-    // TODO (3) Make sure to register and unregister this as a Shared Preference Change listener, in
+    // COMPLETED (3) Make sure to register and unregister this as a Shared Preference Change listener, in
     // onCreate and onDestroy.
+
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+        super.onDestroy();
+    }
 
 }
